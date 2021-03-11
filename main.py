@@ -8,22 +8,38 @@ estudiantes = estructura_dataset(resumenes_estudiantes)
 
 
 def run():
-    datos = docentes.iloc[0]
-    cols = docentes.columns
-    test = {}
-    for i, col in enumerate(cols):
-        try:
-            value = int(datos[i]) if not nan(datos[i]) else None
-        except:
-            value = datos[i]
+    columns = docentes.columns
 
-        test[col] = value
+    # Resumenes Docentes Agregando Data a la BD
+    for index, resumen in docentes.iterrows():
+        data = {}
+        for column in columns:
+            try:
+                value = int(resumen[column]) if not nan(resumen[column]) else None
+            except:
+                value = resumen[column]
+            data[column] = value
+        data['tipo_resumen'] = 'docentes'
 
-    test_class = ResumenesInvestigacion(test)
-    db.session.add(test_class)
-    db.session.commit()
+        investigacion = ResumenesInvestigacion(data)  # Creamos el Objeto
+        db.session.add(investigacion)  # Agregamos a la session
+
+    # Resumenes Estudiantes Agregando Data a la BD
+    for index, resumen in estudiantes.iterrows():
+        data = {}
+        for column in columns:
+            try:
+                value = int(resumen[column]) if not nan(resumen[column]) else None
+            except:
+                value = resumen[column]
+            data[column] = value
+        data['tipo_resumen'] = 'estudiantes'
+
+        investigacion = ResumenesInvestigacion(data)  # Creamos el Objeto
+        db.session.add(investigacion)
+
+    db.session.commit()  # Realizamos la operacion atomica
     print('Hola')
-
 
 
 if __name__ == '__main__':

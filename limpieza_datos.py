@@ -66,7 +66,7 @@ def datos_adicionales(dataset):
         for index, resumen in df.iterrows():
             result = regex.findall(resumen['convocatoria'])
             convocatoria = result[0]
-            anio = result[1] if len(result) > 1 else ''
+            anio = result[1] if len(result) > 1 else None
 
             df.at[index, 'tipo_convocatoria'] = convocatoria
             df.at[index, 'anio_convocatoria'] = anio
@@ -157,7 +157,7 @@ def estructura_columnas(dataset):
 
         # Eliminamos registros no encontrados en Palabras Clave
         df['palabra_clave1'] = df['palabra_clave1'].apply(
-            lambda row: row if (row != 'No se encontraron palabras clave registradas') else "")
+            lambda row: row if (row != 'No se encontraron palabras clave registradas') else None)
 
         # Convocatorias N/A
         df['convocatoria'] = df['convocatoria'].apply(lambda row: row if (row != 'N/A (Registrado)') else "Ninguna")

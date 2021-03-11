@@ -51,6 +51,7 @@ class ResumenesInvestigacion(db.Base):
     grupo_investigacion4 = Column(String(500))
     linea_investigacion4 = Column(String(500))
     nombre_asesor = Column(String(100))
+    tipo_resumen = Column(String(20))
 
     def __init__(self, values=None):
         if values is None:

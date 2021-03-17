@@ -93,6 +93,7 @@ def datos_adicionales(dataset):
 
 
 def ordenamiento_datos(dataset):
+    # TODO: codigo base para construir corpus
     def wrapper(*args, **kargs):
         df = dataset(*args, **kargs)
         columns = ['palabra', 'codigo', 'nombres', 'programa', 'facultad', 'grupo', 'linea', 'departamento']

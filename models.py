@@ -1,5 +1,39 @@
 import db
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, ARRAY
+
+
+class StopWord(db.Base):
+    __tablename__ = 'stop_word'
+
+    palabra = Column(String(100), primary_key=True)
+
+    def __init__(self, palabra):
+        self.palabra = palabra
+
+    def __repr__(self):
+        return f'StopWord({self.palabra})'
+
+    def __str__(self):
+        return self.palabra
+
+
+class DiccionarioLema(db.Base):
+    __tablename__ = 'diccionario_lema'
+    lema = Column(String(500), primary_key=True, nullable=False)
+    palabras = Column(ARRAY(String(500)))
+
+    def __init__(self, lema, palabras):
+        self.lema = lema
+        self.palabras = palabras
+
+    def agregar_palabras(self, palabras):
+        self.palabras = palabras
+
+    def __repr__(self):
+        return f'DiccionarioLema({self.lema} => {self.palabras})'
+
+    def __str__(self):
+        return self.lema
 
 
 class ResumenesInvestigacion(db.Base):
@@ -52,12 +86,19 @@ class ResumenesInvestigacion(db.Base):
     linea_investigacion4 = Column(String(500))
     nombre_asesor = Column(String(100))
     tipo_resumen = Column(String(20))
+    corpus = Column(Text)
+    corpus_palabras = Column(Text)
+    corpus_lemas = Column(Text)
 
     def __init__(self, values=None):
         if values is None:
-            values = dict()
+            return
         for attribute in values.keys():
             setattr(self, attribute, values[attribute])
+
+
+
+        return query
 
     def __attributes_setter__(self, values):
         for attribute in values.keys():

@@ -84,7 +84,10 @@ class ResumenesInvestigacion(db.Base):
     departamento_autor4 = Column(String(500))
     grupo_investigacion4 = Column(String(500))
     linea_investigacion4 = Column(String(500))
-    nombre_asesor = Column(String(100))
+    asesor1 = Column(String(100))
+    asesor2 = Column(String(100))
+    asesor3 = Column(String(100))
+    asesor4 = Column(String(100))
     tipo_resumen = Column(String(20))
     corpus = Column(Text)
     corpus_palabras = Column(Text)
@@ -95,10 +98,6 @@ class ResumenesInvestigacion(db.Base):
             return
         for attribute in values.keys():
             setattr(self, attribute, values[attribute])
-
-
-
-        return query
 
     def __attributes_setter__(self, values):
         for attribute in values.keys():

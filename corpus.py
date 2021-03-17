@@ -1,18 +1,29 @@
 import re
-from nltk.corpus import stopwords
 from models import StopWord
 from db import session
 
-
-if session.query(StopWord).count() == 0:
-    stopwords_español = stopwords.words('spanish')
-    stopwords_list = [StopWord(word) for word in stopwords_español]
-    session.add_all(stopwords_list)
-    session.commit()
-
-stopwords = [word.palabra for word in session.query(StopWord).all()]
 columns = ['palabra', 'facultad', 'programa', 'grupo', 'linea']
 data = {}
+if session.query(StopWord).count() == 0:
+    from nltk.corpus import stopwords
+    stopwords = stopwords.words('spanish')
+    stopwords_list = [StopWord(word) for word in stopwords]
+    session.add_all(stopwords_list)
+    session.commit()
+else:
+    stopwords = [word.palabra for word in session.query(StopWord).all()]
+
+
+# try:
+#     if session.query(StopWord).count() == 0:
+#         stopwords_español = stopwords.words('spanish')
+#         stopwords_list = [StopWord(word) for word in stopwords_español]
+#         session.add_all(stopwords_list)
+#         session.commit()
+#         stopwords = [word.palabra for word in session.query(StopWord).all()]
+# except:
+
+
 
 
 def clean_text(text):

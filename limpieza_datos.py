@@ -96,7 +96,7 @@ def ordenamiento_datos(dataset):
     # TODO: codigo base para construir corpus
     def wrapper(*args, **kargs):
         df = dataset(*args, **kargs)
-        columns = ['palabra', 'codigo', 'nombres', 'programa', 'facultad', 'grupo', 'linea', 'departamento']
+        columns = ['palabra', 'codigo', 'nombres', 'asesor', 'programa', 'facultad', 'grupo', 'linea', 'departamento']
         for column in columns:
             regex = re.compile(column)
             filtered_columns = list(filter(regex.match, columnas_resumenes))
@@ -145,8 +145,8 @@ def estructura_columnas(dataset):
 
         # Asignamos Columnas
         if len(df.columns) > 13:  # Columnas para estudiantes
-            columns.insert(7, 'departamento_autor1')
-            columns.insert(9, 'nombre_asesor')
+            columns.insert(8, 'departamento_autor1')
+            columns.insert(10, 'asesor1')
             df.columns = columns
         else:  # Columnas para docentes
             df.columns = columns

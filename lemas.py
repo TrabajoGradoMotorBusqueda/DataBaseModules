@@ -45,12 +45,6 @@ def lemmatizer(text):
             similar_word = difflib.get_close_matches(cleaned_lema, diccionario_lemas.keys(), n=1, cutoff=0.94)
             # Si hay un lema ya registrado tomamos esa base
             cleaned_lema = similar_word[0] if len(similar_word) > 0 else cleaned_lema
-
-        # Agreamos el corpus de lemas que servirá para el entranamiento e instancias
-        lemas = lemas + ' ' + cleaned_lema  # table -> corpus_lemas
-
-        # Verificar si el Lema existe
-        if list_words is None:
             # Agregamos palabra original y lema
             if cleaned_lema == cleaned_word:
                 diccionario_lemas[cleaned_lema] = [cleaned_word]  # Palabra original no se lematizo
@@ -61,32 +55,14 @@ def lemmatizer(text):
             if cleaned_word not in list_words:
                 diccionario_lemas[cleaned_lema].append(cleaned_word)  # Agregamos nueva palabra original
 
+        # Agreamos el corpus de lemas que servirá para el entranamiento e instancias
+        lemas = lemas + ' ' + cleaned_lema  # table -> corpus_lemas
+
     # Retornamos Corpus de Lemas
     return lemas
 
 
 def lematizar_corpus(corpus):
-    lemas_corpus = lematizar_corpus(corpus)
-    vocabulario = set(lemas_corpus)
-    return lemas_corpus, vocabulario
-
-
-""" ##Cambiar codigo arriba if list_words == None
- # Palabras Similares al lema encontrado
-similar_word = difflib.get_close_matches(cleaned_lema, diccionario_lemas.keys(), n=1, cutoff=0.94)
-# Si hay un lema ya registrado tomamos esa base
-cleaned_lema = similar_word[0] if len(similar_word) > 0 else cleaned_lema
-if list_words is None:
-# Agregamos palabra original y lema
-    if cleaned_lema == cleaned_word:
-        diccionario_lemas[cleaned_lema] = [cleaned_word]  # Palabra original no se lematizo
-    else:
-        diccionario_lemas[cleaned_lema] = [cleaned_word, cleaned_lema]  # Palabra lematizada y su original
-else:
-# Revisamos si es una nueva palabra
-    if cleaned_word not in list_words:
-        diccionario_lemas[cleaned_lema].append(cleaned_word)  # Agregamos nueva palabra original
-
-# Agreamos el corpus de lemas que servirá para el entranamiento e instancias
-lemas = lemas + ' ' + cleaned_lema  # table -> corpus_lemas
-    """
+    lemas_corpus = lemmatizer(corpus)
+    # vocabulario = set(lemas_corpus)
+    return lemas_corpus

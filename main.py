@@ -11,7 +11,7 @@ db.Base.metadata.create_all(db.engine)  # Creacion de Tablas
 # Modulos Procesamiento de Texto
 from corpus import construccion_corpus
 from lemas import lematizar_corpus, diccionario_lemas
-from limpieza_datos import resumenes_estudiantes, resumenes_docentes, estructura_dataset
+from estructura_datos import resumenes_estudiantes, resumenes_docentes, estructura_dataset
 from query import query_id_investigacion
 
 docentes = estructura_dataset(resumenes_docentes)

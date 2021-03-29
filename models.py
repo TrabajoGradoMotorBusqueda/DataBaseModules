@@ -36,8 +36,8 @@ class DiccionarioLema(db.Base):
         return self.lema
 
 
-class ResumenesInvestigacion(db.Base):
-    __tablename__ = 'resumenes_investigacion'
+class Investigacion(db.Base):
+    __tablename__ = 'investigacion'
 
     id = Column(Integer, primary_key=True, nullable=False)
     id_investigacion = Column(String(8))
@@ -88,7 +88,7 @@ class ResumenesInvestigacion(db.Base):
     asesor2 = Column(String(100))
     asesor3 = Column(String(100))
     asesor4 = Column(String(100))
-    tipo_resumen = Column(String(20))
+    tipo_investigacion = Column(String(20))
     corpus = Column(Text)
     corpus_palabras = Column(Text)
     corpus_lemas = Column(Text)

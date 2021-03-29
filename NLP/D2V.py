@@ -5,7 +5,7 @@ import multiprocessing
 from time import time
 
 from db import session
-from models import ResumenesInvestigacion
+from models import Investigacion
 
 
 class ModeloD2V:
@@ -41,9 +41,9 @@ class ModeloD2V:
 
 
 class Corpus(object):
-    corpus_investigaciones = session.query(ResumenesInvestigacion.id,
-                                           ResumenesInvestigacion.id_investigacion,
-                                           ResumenesInvestigacion.corpus_lemas).all()
+    corpus_investigaciones = session.query(Investigacion.id,
+                                           Investigacion.id_investigacion,
+                                           Investigacion.corpus_lemas).all()
     corpus_investigaciones = sorted(corpus_investigaciones, key=lambda item: item[0])
 
     def __iter__(self):

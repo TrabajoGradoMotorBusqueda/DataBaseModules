@@ -4,7 +4,7 @@ import time
 
 # Modulos DB
 import db
-from models import ResumenesInvestigacion, DiccionarioLema
+from models import Investigacion, DiccionarioLema
 
 db.Base.metadata.create_all(db.engine)  # Creacion de Tablas
 
@@ -32,7 +32,7 @@ def add_data():
                 value = resumen[column]
             data[column] = value
         data['tipo_resumen'] = 'docentes'
-        investigacion = ResumenesInvestigacion(data)  # Creamos el Objeto
+        investigacion = Investigacion(data)  # Creamos el Objeto
         resumenes.append(investigacion)
     # db.session.add(investigacion)  # Agregamos a la session
 
@@ -50,7 +50,7 @@ def add_data():
             data[column] = value
         data['tipo_resumen'] = 'estudiantes'
 
-        investigacion = ResumenesInvestigacion(data)  # Creamos el Objeto
+        investigacion = Investigacion(data)  # Creamos el Objeto
         resumenes.append(investigacion)
         # db.session.add(investigacion)
 
@@ -64,7 +64,7 @@ def add_data():
 
 
 def build_corpus():
-    investigaciones = tuple(db.session.query(ResumenesInvestigacion).all())
+    investigaciones = tuple(db.session.query(Investigacion).all())
     for investigacion in investigaciones:
         corpus, corpus_limpio = construccion_corpus(**vars(investigacion))
         corpus_lemas = lematizar_corpus(corpus_limpio)

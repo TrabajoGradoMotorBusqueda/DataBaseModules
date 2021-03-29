@@ -1,11 +1,11 @@
 import pandas as pd
 import re
-from models import ResumenesInvestigacion
+from models import Investigacion
 
 resumenes_docentes = pd.read_excel("./data/Resumenes.xlsx", sheet_name="Proyectos Docentes")
 resumenes_estudiantes = pd.read_excel("./data/Resumenes.xlsx", sheet_name="studiantiles y Trabajos de G")
 
-columnas_resumenes = [column for column in dir(ResumenesInvestigacion)
+columnas_resumenes = [column for column in dir(Investigacion)
                       if not (column.startswith('_') or column == 'metadata' or column == 'id')]
 
 
@@ -93,7 +93,7 @@ def datos_adicionales(dataset):
 
 
 def ordenamiento_datos(dataset):
-    # TODO: codigo base para construir corpus
+    # TODO: codigo base para construir corpus, ontologia
     def wrapper(*args, **kargs):
         df = dataset(*args, **kargs)
         columns = ['palabra', 'codigo', 'nombres', 'asesor', 'programa', 'facultad', 'grupo', 'linea', 'departamento']

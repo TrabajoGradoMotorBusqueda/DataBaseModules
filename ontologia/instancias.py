@@ -132,3 +132,15 @@ def instanciar_estudiante(id_estudiante, nombre_estudiante, apellidos):
     # estudiante.set_cedula_investigador()
     # estudiante.set_correo_investigador()
     return estudiante
+
+
+def definir_id(nombre, clase):
+    nombre = normalizar_nombre(nombre)
+    instancia = ontologia.search_one(iri=f"*{nombre}")
+
+    if instancia is None:
+        clase = ontologia.search_one(iri=f"*{clase}")
+        id_objeto = len(clase.instances()) + 1
+        return id_objeto
+    else:
+        return instancia

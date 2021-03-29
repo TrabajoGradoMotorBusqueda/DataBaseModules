@@ -1,7 +1,7 @@
 import re
 
 from db import session
-from models import ResumenesInvestigacion
+from models import Investigacion
 import instancias as onto
 
 columns = ['palabra', 'codigo', 'nombres', 'apellidos', 'programa', 'facultad', 'departamento', 'grupo', 'linea',
@@ -43,24 +43,46 @@ def atributos_instacia(investigacion, estudiante):
     return atributos
 
 
+class UniversidadOntologia:
+
+    def __init__(self, nombre_universidad, nombre_viis):
+        universidad = onto.ontologia.search_one(iri=f"*{nombre_universidad}")
+        if universidad is None:
+            id_universidad = len(onto.ontologia.Universidad.instances()) + 1
+            universidad = onto.instanciar_universidad(id_universidad, nombre_universidad)
+            self.universidad = universidad
+        else:
+            self.universidad = universidad
+
+        viis = onto.ontologia.search_one(iri=f"*{nombre_viis}")
+        if viis is None:
+            id_viis = len(onto.ontologia.VIIS.instances()) + 1
+            viis = onto.instanciar_universidad(id_viis, nombre_viis)
+            self.viis = viis
+        else:
+            self.viis = viis
+
+
 class InvestigacionOntologia:
     """
     Clase Investigacion Ontologia
     donde será la clase padre para las instacias en la ontologia
     """
-    investigacion = None
-    investigacion_ontologia = []
-    grupo_investigacion = []
-    linea_investigacion = []
-    convocatoria = []
-    viis = []
-    universidad = []
-    facultad = []
-    departamento = []
-    programa = []
 
-    def __init__(self, investigacion):
+    def __init__(self, investigacion, universidad_ontologia):
         self.investigacion = investigacion
+        self.universidad = universidad_ontologia.universidad
+        self.viis = universidad_ontologia.viis
+        # Instancias Adicionales Ontologia
+        self.investigacion_ontologia = None
+        self.grupos_investigacion = []
+        self.lineas_investigacion = []
+        self.convocatoria = None
+        self.facultades = []
+        self.departamentos = []
+        self.programas = []
+
+    # TODO: Mthods para relacionar grupos, facultad con universidad
 
 
 class InvestigacionDocente(InvestigacionOntologia):
@@ -68,16 +90,14 @@ class InvestigacionDocente(InvestigacionOntologia):
     Clase Investigacion Docente que hereda de InvestigacionOntologia
     para realizar instancias referentes a los docentes.
     """
-    docentes = []
-    investigador_externo = []
 
-    def __init__(self, investigacion_docente):
-        super().__init__(investigacion_docente)
+    def __init__(self, investigacion_docente, universidad_ontologia):
+        super().__init__(investigacion_docente, universidad_ontologia)
+        self.docentes = []
+        self.investigador_externo = []
 
-    def instanciar_investigacion(self):
+    def instanciar(self):
         diccionario_atributos = atributos_instacia(self.investigacion, False)
-        grupo_investigacion = []
-        linea_investigacion = []
 
         for i in range(len(diccionario_atributos['codigos'])):
             # Instanciar Docente
@@ -85,30 +105,46 @@ class InvestigacionDocente(InvestigacionOntologia):
             nombre = diccionario_atributos['nombres'][i]
             apellidos = diccionario_atributos['apellidos'][i]
             docente = onto.instanciar_docente(codigo, nombre, apellidos)
+            self.docentes = [docente]
 
             # Instanciar Programa
-            id_programa = self.investigacion.id
-            nombre_programa = diccionario_atributos['programa'][i]
-            programa = onto.instanciar_programa(id_programa, nombre_programa)
+            nombre_programa = diccionario_atributos[columns[4]][i]
+
+            programa = onto.definir_id(nombre_programa, columns[4])
+            id_programa = programa if isinstance(programa, int) else None
+
+            programa_instancia = onto.instanciar_programa(id_programa,
+                                                          nombre_programa) if id_programa is not None else programa
+            self.programas.append(programa_instancia)
 
             # Instanciar Facultad
-            id_facultad = self.investigacion.id
-            nombre_facultad = diccionario_atributos['facultad'][i]
-            facultad = onto.instanciar_facultad(id_facultad, nombre_facultad)
+            nombre_facultad = diccionario_atributos[columns[5]][i]
+
+            facultad = onto.definir_id(nombre_facultad, columns[5])
+
+            facultad_instancia = facultad if not isinstance(programa, int) else \
+                onto.instanciar_facultad(facultad, nombre_facultad)
+
+            self.facultades.append(facultad_instancia)
 
             # Instanciar Grupo Investigacion
-            id_grupo = self.investigacion.id
-            nombre_grupo = diccionario_atributos['grupo_investigacion'][i]
-            grupo = onto.instanciar_gi(id_grupo, nombre_grupo)
-            grupo_investigacion.append(grupo)
+            nombre_grupo = diccionario_atributos[columns[7]][i]
+            grupo = onto.definir_id(nombre_grupo, columns[7])
 
-            # Instanciar linea invesitigacion
-            id_linea = self.investigacion.id
-            nombre_linea = diccionario_atributos['linea_investigacion'][i]
-            linea = onto.instanciar_gi(id_linea, nombre_linea)
-            linea_investigacion.append(linea)
+            grupo_instancia = grupo if not isinstance(grupo, int) else \
+                onto.instanciar_gi(grupo, nombre_grupo)
+            self.grupos_investigacion.append(grupo_instancia)
 
-            # TODO: Tomar id para programa, facultad, grupo, linea de la clase padre.
+            # Instanciar linea investigacion
+            nombre_linea = diccionario_atributos[columns[8]][i]
+            linea = onto.definir_id(nombre_linea)
+            linea_instancia = linea if not isinstance(linea, int) else \
+                onto.instanciar_gi(linea, nombre_linea)
+            self.lineas_investigacion.append(linea_instancia)
+
+            # De esta manera podemos agregar igualmente para Departamento
+            # En las instancias de estudiantes se encuentra el ejemplo
+
 
 class InvestigacionEstudiante(InvestigacionOntologia):
     """
@@ -121,8 +157,8 @@ class InvestigacionEstudiante(InvestigacionOntologia):
         super().__init__(investigacion_estudiante)
 
 
-class Investigacion(object):
-    investigaciones = session.query(ResumenesInvestigacion).all()
+class Investigaciones(object):
+    investigaciones = session.query(Investigacion).all()
     investigaciones = sorted(investigaciones, key=lambda item: item.id)
 
     def __iter__(self):
@@ -131,20 +167,21 @@ class Investigacion(object):
 
 
 class Instanciar:
-    investigaciones = None
 
-    def __init__(self, investigaciones):
+    def __init__(self, investigaciones, nombre_universidad, nombre_viis):
         self.investigaciones = investigaciones
+        self.universidad_ontologia = UniversidadOntologia(nombre_universidad, nombre_viis)
 
     def instaciar_investigaciones(self):
         for investigacion in self.investigaciones:
             if investigacion.tipo_resumen == 'docentes':
-                investigacion_docente = InvestigacionDocente(investigacion)
-                investigacion_docente.instanciar_investigacion()
+                investigacion_docente = InvestigacionDocente(investigacion, self.universidad_ontologia)
+                investigacion_docente.instanciar()
             else:
                 investigacion_estudiante = InvestigacionEstudiante(investigacion)
 
 
 if __name__ == '__main__':
-    instacias = Instanciar(Investigacion())
+    instacias = Instanciar(Investigacion(), "Universidad de Nariño", "Vicerrectoría de Investigación e Interacción "
+                                                                     "Social")
     instacias.instaciar_investigaciones()

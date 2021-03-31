@@ -25,8 +25,10 @@ def atributos_instacia(investigacion, estudiante):
     data = dir(investigacion)
     atributos['titulo'] = investigacion.titulo_investigacion
     atributos['resumen'] = investigacion.resumen_investigacion
+    atributos['estado'] = investigacion.estado_investigacion
     atributos['palabras_clave'] = filtered_columns(columns[0], investigacion, data)
     atributos['convocatoria'] = investigacion.convocatoria
+    atributos['tipo_proyecto'] = investigacion.tipo_resumen
     atributos['tipo_convocatoria'] = investigacion.tipo_convocatoria
     atributos['anio_convocatoria'] = investigacion.anio_convocatoria
     atributos['codigos'] = filtered_columns(columns[1], investigacion, data)
@@ -74,7 +76,7 @@ class InvestigacionOntologia:
         self.universidad = universidad_ontologia.universidad
         self.viis = universidad_ontologia.viis
         # Instancias Adicionales Ontologia
-        self.investigacion_ontologia = None
+        self.proyecto_investigacion = None
         self.grupos_investigacion = []
         self.lineas_investigacion = []
         self.convocatoria = None
@@ -101,49 +103,84 @@ class InvestigacionDocente(InvestigacionOntologia):
 
         for i in range(len(diccionario_atributos['codigos'])):
             # Instanciar Docente
-            codigo = diccionario_atributos['codigo'][i]
+            codigo = diccionario_atributos['codigos'][i]
             nombre = diccionario_atributos['nombres'][i]
             apellidos = diccionario_atributos['apellidos'][i]
-            docente = onto.instanciar_docente(codigo, nombre, apellidos)
-            self.docentes = [docente]
+            docente = onto.definir_id(nombre+" "+apellidos, "Docente")
+            docente_instancia = docente if not isinstance(docente, int) else\
+                onto.instanciar_docente(docente, codigo, nombre, apellidos)
+            self.docentes.append(docente_instancia)
 
             # Instanciar Programa
-            nombre_programa = diccionario_atributos[columns[4]][i]
+            if i < len(diccionario_atributos['programa']):
+                nombre_programa = diccionario_atributos['programa'][i]
 
-            programa = onto.definir_id(nombre_programa, columns[4])
-            id_programa = programa if isinstance(programa, int) else None
+                programa = onto.definir_id(nombre_programa, 'Programa')
+                id_programa = programa if isinstance(programa, int) else None
 
-            programa_instancia = onto.instanciar_programa(id_programa,
-                                                          nombre_programa) if id_programa is not None else programa
-            self.programas.append(programa_instancia)
+                programa_instancia = onto.instanciar_programa(id_programa,
+                                                              nombre_programa) if id_programa is not None else programa
+                self.programas.append(programa_instancia)
 
             # Instanciar Facultad
-            nombre_facultad = diccionario_atributos[columns[5]][i]
+            if i < len(diccionario_atributos['facultad']):
+                nombre_facultad = diccionario_atributos['facultad'][i]
 
-            facultad = onto.definir_id(nombre_facultad, columns[5])
+                facultad = onto.definir_id(nombre_facultad, 'Facultad')
 
-            facultad_instancia = facultad if not isinstance(programa, int) else \
-                onto.instanciar_facultad(facultad, nombre_facultad)
+                facultad_instancia = facultad if not isinstance(programa, int) else \
+                    onto.instanciar_facultad(facultad, nombre_facultad)
 
-            self.facultades.append(facultad_instancia)
+                self.facultades.append(facultad_instancia)
 
             # Instanciar Grupo Investigacion
-            nombre_grupo = diccionario_atributos[columns[7]][i]
-            grupo = onto.definir_id(nombre_grupo, columns[7])
+            if i < len(diccionario_atributos['grupo_investigacion']):
+                nombre_grupo = diccionario_atributos['grupo_investigacion'][i]
+                grupo = onto.definir_id(nombre_grupo, 'Grupo_investigacion')
 
-            grupo_instancia = grupo if not isinstance(grupo, int) else \
-                onto.instanciar_gi(grupo, nombre_grupo)
-            self.grupos_investigacion.append(grupo_instancia)
+                grupo_instancia = grupo if not isinstance(grupo, int) else \
+                    onto.instanciar_gi(grupo, nombre_grupo)
+                self.grupos_investigacion.append(grupo_instancia)
 
             # Instanciar linea investigacion
-            nombre_linea = diccionario_atributos[columns[8]][i]
-            linea = onto.definir_id(nombre_linea)
-            linea_instancia = linea if not isinstance(linea, int) else \
-                onto.instanciar_gi(linea, nombre_linea)
-            self.lineas_investigacion.append(linea_instancia)
+            if i < len(diccionario_atributos['linea_investigacion']):
+                nombre_linea = diccionario_atributos['linea_investigacion'][i]
+                linea = onto.definir_id(nombre_linea, 'Linea_investigacion')
+                linea_instancia = linea if not isinstance(linea, int) else \
+                    onto.instanciar_li(linea, nombre_linea)
+                self.lineas_investigacion.append(linea_instancia)
+
+            # Instanciar Convocatoria
+            if i <= 0:
+                nombre_convocatoria = diccionario_atributos['convocatoria'][i]
+                convocatoria = onto.definir_id(nombre_convocatoria, 'Convocatoria')
+                convocatoria_instancia = convocatoria if not isinstance(convocatoria, int) else \
+                    onto.instanciar_convocatoria(convocatoria,
+                                                 nombre_convocatoria,
+                                                 diccionario_atributos['tipo_convocatoria'],
+                                                 diccionario_atributos['anio_convocatoria'])
+                self.convocatoria = convocatoria_instancia
 
             # De esta manera podemos agregar igualmente para Departamento
             # En las instancias de estudiantes se encuentra el ejemplo
+
+        titulo = diccionario_atributos['titulo']
+        resumen = diccionario_atributos['resumen']
+        palabras_clave = diccionario_atributos['palabras_clave']
+        tipo = diccionario_atributos['tipo_convocatoria']
+        estado = diccionario_atributos['estado']
+        id_investigacion = self.investigacion.id
+
+        proyecto_investigacion = onto.instanciar_pi(
+            id_investigacion,
+            titulo,
+            resumen,
+            palabras_clave,
+            tipo,
+            estado
+        )
+
+        self.proyecto_investigacion = proyecto_investigacion
 
 
 class InvestigacionEstudiante(InvestigacionOntologia):
@@ -182,6 +219,6 @@ class Instanciar:
 
 
 if __name__ == '__main__':
-    instacias = Instanciar(Investigacion(), "Universidad de Nariño", "Vicerrectoría de Investigación e Interacción "
-                                                                     "Social")
+    instacias = Instanciar(Investigaciones(), "Universidad de Nariño", "Vicerrectoría de Investigación e Interacción "
+                                                                       "Social")
     instacias.instaciar_investigaciones()

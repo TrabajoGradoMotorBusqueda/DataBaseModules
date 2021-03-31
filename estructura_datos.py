@@ -118,7 +118,7 @@ def ordenamiento_datos(dataset):
 def completado_numero_registros(dataset):
     def wrapper(*args, **kargs):
         df = dataset(*args, **kargs)
-        nac = 1
+        nac = 1 # Numero actual
         for index, row in df.iterrows():
             if pd.isnull(row['no']):
                 df.loc[index, 'no'] = nac

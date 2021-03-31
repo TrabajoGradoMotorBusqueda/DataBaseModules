@@ -93,13 +93,13 @@ def instanciar_universidad(id_universidad, nombre_universidad):
 
 
 # Funciones para doocentes
-def instanciar_docente(id_docente, nombre, apellidos):
+def instanciar_docente(id_docente, codigo, nombre, apellidos):
     # Ojo recibe de parametro Investigador
     docente = Docente(normalizar_nombre(nombre + " " + apellidos))
     docente.set_id_docente(id_docente)
+    docente.set_codigo_investigador(codigo)
     docente.set_nombres_investigador(nombre)
     docente.set_apellidos_investigador(apellidos)
-
     #     docente.set_id_investigador()
     #     docente.set_codigo_investigador
     #     docente.set_cedula_investigador()
@@ -136,11 +136,12 @@ def instanciar_estudiante(id_estudiante, nombre_estudiante, apellidos):
 
 def definir_id(nombre, clase):
     nombre = normalizar_nombre(nombre)
-    instancia = ontologia.search_one(iri=f"*{nombre}")
+    clase_ontologia = ontologia.search_one(iri=f"*{clase}")
+    instancia = ontologia.search_one(iri=f"*{nombre}", is_a=clase_ontologia)
+    # instancia = ontologia.search(type=clase_ontologia)
 
     if instancia is None:
-        clase = ontologia.search_one(iri=f"*{clase}")
-        id_objeto = len(clase.instances()) + 1
+        id_objeto = len(clase_ontologia.instances()) + 1
         return id_objeto
     else:
         return instancia

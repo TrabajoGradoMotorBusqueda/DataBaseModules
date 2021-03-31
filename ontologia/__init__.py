@@ -248,9 +248,9 @@ with ontologia:
 
         def set_palabras_clave(self, palabra_clave):
             if (len(self.palabras_clave) > 0):
-                self.palabras_clave.append(palabra_clave)
+                self.palabras_clave.extend(palabra_clave)
             else:
-                self.palabras_clave = [palabra_clave]
+                self.palabras_clave = palabra_clave
 
         def relation_pi_tiene_palabra(self, palabra):
             self.pi_tiene_palabra.append(palabra)

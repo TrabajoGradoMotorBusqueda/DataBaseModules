@@ -1,7 +1,7 @@
 import re
 
 from db import session
-from models import Investigacion
+from models import Investigacion, DiccionarioLema
 import instancias as onto
 
 columns = ['palabra', 'codigo', 'nombres', 'apellidos', 'programa', 'facultad', 'departamento', 'grupo', 'linea',
@@ -20,15 +20,15 @@ def filtered_columns(column, investigacion, data):
     return values
 
 
-def atributos_instacia(investigacion, estudiante):
+def atributos_instancia(investigacion, estudiante):
     atributos = dict()
     data = dir(investigacion)
     atributos['titulo'] = investigacion.titulo_investigacion
     atributos['resumen'] = investigacion.resumen_investigacion
     atributos['estado'] = investigacion.estado_investigacion
     atributos['palabras_clave'] = filtered_columns(columns[0], investigacion, data)
-    atributos['convocatoria'] = investigacion.convocatoria
     atributos['tipo_proyecto'] = investigacion.tipo_resumen
+    atributos['convocatoria'] = investigacion.convocatoria
     atributos['tipo_convocatoria'] = investigacion.tipo_convocatoria
     atributos['anio_convocatoria'] = investigacion.anio_convocatoria
     atributos['codigos'] = filtered_columns(columns[1], investigacion, data)
@@ -77,6 +77,7 @@ class InvestigacionOntologia:
         self.viis = universidad_ontologia.viis
         # Instancias Adicionales Ontologia
         self.proyecto_investigacion = None
+        self.palabras = []
         self.grupos_investigacion = []
         self.lineas_investigacion = []
         self.convocatoria = None
@@ -99,17 +100,49 @@ class InvestigacionDocente(InvestigacionOntologia):
         self.investigador_externo = []
 
     def instanciar(self):
-        diccionario_atributos = atributos_instacia(self.investigacion, False)
+        diccionario_atributos = atributos_instancia(self.investigacion, False)
+        palabras = []
+
+        titulo = diccionario_atributos['titulo']
+        resumen = diccionario_atributos['resumen']
+        palabras_clave = diccionario_atributos['palabras_clave']
+        tipo = diccionario_atributos['tipo_convocatoria']
+        estado = diccionario_atributos['estado']
+        id_investigacion = self.investigacion.id
+
+        proyecto_investigacion = onto.instanciar_pi(
+            id_investigacion,
+            titulo,
+            resumen,
+            palabras_clave,
+            tipo,
+            estado
+        )
+
+        self.proyecto_investigacion = proyecto_investigacion
+
+        palabra_tipo_convocatoria = [onto.instanciar_palabra(tipo.lower(), [tipo.lower()])]
+        palabra_estado = [onto.instanciar_palabra(palabra.lower(), [palabra.lower()])
+                          for palabra in estado.split() if len(palabra) > 2]
+        palabras.extend(palabra_tipo_convocatoria + palabra_estado)
 
         for i in range(len(diccionario_atributos['codigos'])):
             # Instanciar Docente
             codigo = diccionario_atributos['codigos'][i]
-            nombre = diccionario_atributos['nombres'][i]
+            nombres = diccionario_atributos['nombres'][i]
             apellidos = diccionario_atributos['apellidos'][i]
-            docente = onto.definir_id(nombre+" "+apellidos, "Docente")
-            docente_instancia = docente if not isinstance(docente, int) else\
-                onto.instanciar_docente(docente, codigo, nombre, apellidos)
+            docente = onto.definir_id(nombres + " " + apellidos, "Docente")
+            docente_instancia = docente if not isinstance(docente, int) else \
+                onto.instanciar_docente(docente, codigo, nombres, apellidos)
+            # Relacionar Docente
             self.docentes.append(docente_instancia)
+
+            # Instancias para Palabras
+            palabra_nombres = [onto.instanciar_palabra(nombre.lower(), [nombre])
+                               for nombre in nombres.split()]
+            palabra_apellidos = [onto.instanciar_palabra(apellido.lower(), [apellido.lower()])
+                                 for apellido in apellidos.split()]
+            palabras.extend(palabra_nombres + palabra_apellidos)
 
             # Instanciar Programa
             if i < len(diccionario_atributos['programa']):
@@ -128,7 +161,7 @@ class InvestigacionDocente(InvestigacionOntologia):
 
                 facultad = onto.definir_id(nombre_facultad, 'Facultad')
 
-                facultad_instancia = facultad if not isinstance(programa, int) else \
+                facultad_instancia = facultad if not isinstance(facultad, int) else \
                     onto.instanciar_facultad(facultad, nombre_facultad)
 
                 self.facultades.append(facultad_instancia)
@@ -152,35 +185,67 @@ class InvestigacionDocente(InvestigacionOntologia):
 
             # Instanciar Convocatoria
             if i <= 0:
-                nombre_convocatoria = diccionario_atributos['convocatoria'][i]
+                nombre_convocatoria = diccionario_atributos['convocatoria']
                 convocatoria = onto.definir_id(nombre_convocatoria, 'Convocatoria')
+                tipo_convocatoria = diccionario_atributos['tipo_convocatoria']
+                anio_convocatoria = diccionario_atributos['anio_convocatoria']
                 convocatoria_instancia = convocatoria if not isinstance(convocatoria, int) else \
                     onto.instanciar_convocatoria(convocatoria,
                                                  nombre_convocatoria,
-                                                 diccionario_atributos['tipo_convocatoria'],
-                                                 diccionario_atributos['anio_convocatoria'])
+                                                 tipo_convocatoria,
+                                                 anio_convocatoria)
                 self.convocatoria = convocatoria_instancia
+
+                if nombre_convocatoria != "Ninguna":
+                    palabra_tipo = [onto.instanciar_palabra(palabra.lower(), [palabra.lower()])
+                                    for palabra in tipo_convocatoria.split()]
+                    palabra_anio = [onto.instanciar_palabra(str(tipo_convocatoria), [str(tipo_convocatoria)])]
+                    palabras.extend(palabra_tipo + palabra_anio)
 
             # De esta manera podemos agregar igualmente para Departamento
             # En las instancias de estudiantes se encuentra el ejemplo
 
-        titulo = diccionario_atributos['titulo']
-        resumen = diccionario_atributos['resumen']
-        palabras_clave = diccionario_atributos['palabras_clave']
-        tipo = diccionario_atributos['tipo_convocatoria']
-        estado = diccionario_atributos['estado']
-        id_investigacion = self.investigacion.id
+        # Agregamos Palabras
+        self.palabras.extend(palabras)
 
-        proyecto_investigacion = onto.instanciar_pi(
-            id_investigacion,
-            titulo,
-            resumen,
-            palabras_clave,
-            tipo,
-            estado
-        )
+    def instanciar_palabras(self):
+        vocabulario = set(self.investigacion.corpus_lemas.split())
 
-        self.proyecto_investigacion = proyecto_investigacion
+        for lema in vocabulario:
+            descripciones = session.query(DiccionarioLema.palabras). \
+                filter(DiccionarioLema.lema == lema).one_or_none()
+            palabra_instancia = onto.instanciar_palabra(lema, descripciones.palabras)
+            self.palabras.append(palabra_instancia)
+
+    def relacionar(self):
+
+        for grupo in self.grupos_investigacion:
+            for i, docente in enumerate(self.docentes):
+                docente.relation_docente_es_autor_pi(self.proyecto_investigacion)
+
+                # Relacion Programa, Facultad
+                if i < len(self.programas):
+                    programa = self.programas[i]
+                    programa.relation_programa_tiene_docente(docente)
+                if i < len(self.facultades):
+                    facultad = self.facultades[i]
+                    facultad.relation_universidad_tiene_facultad(facultad)
+
+                universidad = self.universidad
+                universidad.relation_universidad_tiene_facultad(universidad)
+                universidad.relation_universidad_tiene_viis(self.viis)
+
+                # Grupo de Investigacion
+                grupo.relation_gi_tiene_docente(docente)
+
+            for linea in self.lineas_investigacion:
+                grupo.relation_gi_tiene_li(linea)
+
+        self.convocatoria.relation_convocatoria_tiene_pi(pi=self.proyecto_investigacion)
+
+        for palabra in self.palabras:
+            self.proyecto_investigacion \
+                .relation_pi_tiene_palabra(palabra)
 
 
 class InvestigacionEstudiante(InvestigacionOntologia):
@@ -209,16 +274,20 @@ class Instanciar:
         self.investigaciones = investigaciones
         self.universidad_ontologia = UniversidadOntologia(nombre_universidad, nombre_viis)
 
-    def instaciar_investigaciones(self):
+    def instanciar_investigaciones(self):
         for investigacion in self.investigaciones:
             if investigacion.tipo_resumen == 'docentes':
+                print(investigacion.id)
                 investigacion_docente = InvestigacionDocente(investigacion, self.universidad_ontologia)
                 investigacion_docente.instanciar()
-            else:
-                investigacion_estudiante = InvestigacionEstudiante(investigacion)
+                investigacion_docente.instanciar_palabras()
+                investigacion_docente.relacionar()
+        print("Fibisgh")
+        # else:
+        #     investigacion_estudiante = InvestigacionEstudiante(investigacion)
 
 
 if __name__ == '__main__':
     instacias = Instanciar(Investigaciones(), "Universidad de Nariño", "Vicerrectoría de Investigación e Interacción "
                                                                        "Social")
-    instacias.instaciar_investigaciones()
+    instacias.instanciar_investigaciones()

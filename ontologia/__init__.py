@@ -180,10 +180,10 @@ with ontologia:
             return self.descripcion_palabra
 
         def set_descripcion_palabra(self, descripcion_palabra):
-            if (len(self.descripcion_palabra) > 0):
-                self.descripcion_palabra.append(descripcion_palabra)
+            if len(self.descripcion_palabra) > 0:
+                self.descripcion_palabra.extend(descripcion_palabra)
             else:
-                self.descripcion_palabra = [descripcion_palabra]
+                self.descripcion_palabra = descripcion_palabra
 
         def get_lema_palabra(self):
             return self.lema_palabra

@@ -3,4 +3,6 @@
 /.idea/
 /data/.~lock.ResumenesEstudiantes_UnaFila.csv#
 db.py
-
+ontologia/backup/
+ontologia/__pycache__
+ontologia/__pycache__/

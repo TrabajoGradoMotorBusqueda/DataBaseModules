@@ -505,6 +505,7 @@ class InstanciarInvestigacionesDocente(Query):
             investigacion_docente.instanciar()
             investigacion_docente.instanciar_palabras()
             investigacion_docente.relacionar()
+        onto.ontologia.save()
 
 
 # Clase para instanciar Estudiantes
@@ -516,18 +517,21 @@ class InstanciarInvestigacionesEstudiantes(Query):
     def instanciar(self):
         for investigacion in self.investigaciones:
             print(investigacion.id)
+            # if investigacion.id == 386:
             investigacion_estudiante = InvestigacionEstudiante(investigacion, self.universidad_ontologia)
             investigacion_estudiante.instanciar()
             investigacion_estudiante.instanciar_palabras()
             investigacion_estudiante.relacionar()
+        onto.ontologia.save()
+
 
 if __name__ == '__main__':
-    # instanciar_docentes = InstanciarInvestigacionesDocente(
-    #     "Universidad de Nariño",
-    #     "Vicerrectoría de Investigación e Interacción Social")
-    #
-    # instanciar_docentes.instanciar()
+    instanciar_docentes = InstanciarInvestigacionesDocente(
+        "Universidad de Nariño",
+        "Vicerrectoría de Investigación e Interacción Social")
 
+    instanciar_docentes.instanciar()
+    print("Now we will do for students")
     instanciar_estudiantes = InstanciarInvestigacionesEstudiantes(
         "Universidad de Nariño",
         "Vicerrectoría de Investigación e Interacción Social"

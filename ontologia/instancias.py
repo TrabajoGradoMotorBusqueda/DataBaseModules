@@ -123,12 +123,13 @@ def instanciar_ie(id_investigador_externo, nombre_investigador_externo):
 
 
 # Funciones para estudiantes
-def instanciar_estudiante(id_estudiante, nombre_estudiante, apellidos):
+def instanciar_estudiante(id_estudiante, codigo_estudiante,nombre, apellido):
     # Recibe de parametro Investigador
-    estudiante = Estudiante(nombre_estudiante)  # Iniciamos el Objeto
+    estudiante = Estudiante(normalizar_nombre(nombre+" "+apellido))  # Iniciamos el Objeto
     estudiante.set_id_estudiante(id_estudiante)
-    estudiante.set_nombres_investigador(nombre_estudiante)
-    estudiante.set_apellidos_investigador(apellidos)
+    estudiante.set_codigo_investigador(codigo_estudiante)
+    estudiante.set_nombres_investigador(nombre)
+    estudiante.set_apellidos_investigador(apellido)
     # estudiante.set_id_investigador()
     # estudiante.set_codigo_investigador
     # estudiante.set_cedula_investigador()
@@ -147,11 +148,18 @@ def instanciar_palabra(nombre_palabra, descripcion_palabra):
         print(nombre_palabra)
 
 
-def definir_id(nombre, clase):
+def definir_id(nombre, clase, clase_equivalente=None):
     nombre = normalizar_nombre(nombre)
     if clase == "Grupo_investigacion": nombre = nombre.capitalize()
+
     clase_ontologia = ontologia.search_one(iri=f"*{clase}")
     instancia = ontologia.search_one(iri=f"*{nombre}*", is_a=clase_ontologia)
+
+    # instancia_equivalente = None
+    # if clase_equivalente is not None:
+    #     clase_equivalente_onto = ontologia.search_one(iri=f"*{clase_equivalente}")
+    #     instancia_equivalente = ontologia.search_one(iri=f"*{nombre}*", is_a=clase_equivalente_onto)
+
     # instancia = ontologia.search(type=clase_ontologia)
 
     if instancia is None:

@@ -49,21 +49,13 @@ def atributos_instancia(investigacion, estudiante):
 class UniversidadOntologia:
 
     def __init__(self, nombre_universidad, nombre_viis):
-        universidad = onto.ontologia.search_one(iri=f"*{nombre_universidad}")
-        if universidad is None:
-            id_universidad = len(onto.ontologia.Universidad.instances()) + 1
-            universidad = onto.instanciar_universidad(id_universidad, nombre_universidad)
-            self.universidad = universidad
-        else:
-            self.universidad = universidad
+        universidad = onto.definir_id(nombre_universidad, "Universidad")
+        self.universidad = universidad if not isinstance(universidad, int) else \
+            onto.instanciar_universidad(universidad, nombre_universidad)
 
-        viis = onto.ontologia.search_one(iri=f"*{nombre_viis}")
-        if viis is None:
-            id_viis = len(onto.ontologia.VIIS.instances()) + 1
-            viis = onto.instanciar_universidad(id_viis, nombre_viis)
-            self.viis = viis
-        else:
-            self.viis = viis
+        viis = onto.definir_id(nombre_viis, "VIIS")
+        self.viis = viis if not isinstance(viis, int) else \
+            onto.instanciar_viis(viis, nombre_viis)
 
 
 class InvestigacionOntologia:
@@ -72,10 +64,14 @@ class InvestigacionOntologia:
     donde será la clase padre para las instacias en la ontologia
     """
 
-    def __init__(self, investigacion, universidad_ontologia):
+    def __init__(self, investigacion, universidad_ontologia, tipo):
         self.investigacion = investigacion
         self.universidad = universidad_ontologia.universidad
         self.viis = universidad_ontologia.viis
+
+        # Relation Universidad -> VIIS
+        self.universidad.relation_universidad_tiene_viis(self.viis)
+
         # Instancias Adicionales Ontologia
         self.proyecto_investigacion = None
         self.palabras = []
@@ -85,9 +81,115 @@ class InvestigacionOntologia:
         self.facultades = []
         self.departamentos = []
         self.programas = []
+        # Nuevos
+        self.investigadores = []
+        self.tipo = tipo
 
-    # TODO: Mthods para relacionar grupos, facultad con universidad
+    def relacionar(self, tipo, asesores=None, departamentos=None):
+        universidad = self.universidad
+        viis = self.viis
+        convocatoria = self.convocatoria
+        proyecto_investigacion = self.proyecto_investigacion
 
+        # VIIS -> Proyecto
+        viis.relation_viis_tiene_pi(proyecto_investigacion)
+        # VIIS -> Convocatoria
+        viis.relation_viis_tiene_convocatoria(convocatoria)
+
+        # Convocatoria -> Proyecto
+        convocatoria.relation_convocatoria_tiene_pi(pi=proyecto_investigacion)
+
+        for grupo in self.grupos_investigacion:
+
+            # VIIS -> Grupo Investigacion
+            viis.relation_viis_adscribe_gi(grupo)
+
+            for linea in self.lineas_investigacion:
+                # Linea -> Proyecto
+                linea.relation_li_tiene_pi(proyecto_investigacion)
+                grupo.relation_gi_tiene_li(linea)
+
+            for i, investigador in enumerate(self.investigadores):
+
+                if tipo == "estudiantes":
+                    # Investigador -> Estudiante
+                    investigador.relation_investigador_es_estudiante(investigador)
+                    # Grupo de Investigacion -> Estudiante
+                    grupo.relation_gi_tiene_estudiante(investigador)
+                else:
+                    # Investigador -> Docente
+                    investigador.relation_investigador_es_docente(investigador)
+                    # Grupo de Investigacion -> Docente
+                    grupo.relation_gi_tiene_docente(investigador)
+
+                # Estudiante -> Proyecto
+                investigador.relation_estudiante_es_autor_pi(proyecto_investigacion)
+
+                # VIIS -> Investigador
+                viis.relation_viis_tiene_investigador(investigador)
+
+                # Convocatoria -> investigador
+                convocatoria.relation_convocatoria_dirigida_investigador(investigador)
+
+                if asesor is not None and i < len(self.asesores):
+                    asesor = self.asesores[i]
+                    # Asesor -> Proyecto
+                    asesor.docente_asesora_pi.append(self.proyecto_investigacion)
+                    # Grupo -> Asesor
+                    grupo.relation_gi_tiene_docente(asesor)
+                    # VIIS -> Asesor
+                    viis.relation_viis_tiene_investigador(asesor)
+                    # Convocatoria -> Asesor
+                    convocatoria.relation_convocatoria_dirigida_investigador(asesor)
+                else:
+                    asesor = None
+
+                # Relacion Programa, Facultad
+                if i < len(self.programas):
+                    programa = self.programas[i]
+                    if tipo == "estudiantes":
+                        # Programa -> Estudiante
+                        programa.relation_programa_tiene_estudiante(investigador)
+                        # Programa -> Docente
+                        if asesor is not None:
+                            programa.relation_programa_tiene_docente(asesor)
+                    else:
+                        # Programa -> Docente
+                        programa.relation_programa_tiene_docente(investigador)
+                else:
+                    programa = None
+
+                if departamentos is not None and i < len(self.departamentos):
+                    departamento = self.departamentos[i]
+                    # Departamento -> Programa
+                    if programa is not None:
+                        departamento.relation_departamento_tiene_programa(programa)
+                    # Departamento -> Grupo de Investigacion
+                    departamento.relation_departamento_tiene_gi(grupo)
+                else:
+                    departamento = None
+
+                if i < len(self.facultades):
+                    facultad = self.facultades[i]
+                    # Facultad -> Departamento
+                    if departamento is not None:
+                        facultad.relation_facultad_tiene_departamento(departamento)
+                    # Universidad -> Facultad
+                    universidad.relation_universidad_tiene_facultad(facultad)
+
+        for palabra in self.palabras:
+            self.proyecto_investigacion \
+                .relation_pi_tiene_palabra(palabra)
+
+
+    def instanciar_palabras(self):
+        vocabulario = set(self.investigacion.corpus_lemas.split())
+
+        for lema in vocabulario:
+            descripciones = session.query(DiccionarioLema.palabras). \
+                filter(DiccionarioLema.lema == lema).one_or_none()
+            palabra_instancia = onto.instanciar_palabra(lema, descripciones.palabras)
+            self.palabras.append(palabra_instancia)
 
 class InvestigacionDocente(InvestigacionOntologia):
     """
@@ -255,8 +357,8 @@ class InvestigacionEstudiante(InvestigacionOntologia):
     para realizar instancias referentes a los estudiantes.
     """
 
-    def __init__(self, investigacion_estudiante, universidad_ontologia):
-        super().__init__(investigacion_estudiante, universidad_ontologia)
+    def __init__(self, investigacion_estudiante, universidad_ontologia, tipo):
+        super().__init__(investigacion_estudiante, universidad_ontologia, tipo)
         self.estudiantes = []
         self.asesores = []
 
@@ -343,7 +445,7 @@ class InvestigacionEstudiante(InvestigacionOntologia):
             nombre = nombres[i]
             apellido = apellidos[i]
 
-            estudiante = onto.definir_id(nombre + " " + apellido, "Estudiante", "Docente")  # Nombre instancia, Clase
+            estudiante = onto.definir_id(nombre + " " + apellido, "Estudiante")  # Nombre instancia, Clase
             # Instanciar Estudiante en Ontologia
             estudiante_instancia = estudiante if not isinstance(estudiante, int) else \
                 onto.instanciar_estudiante(estudiante, codigo, nombre, apellido)
@@ -435,39 +537,84 @@ class InvestigacionEstudiante(InvestigacionOntologia):
             self.palabras.append(palabra_instancia)
 
     def relacionar(self):
+        universidad = self.universidad
+        viis = self.viis
+        convocatoria = self.convocatoria
+        proyecto_investigacion = self.proyecto_investigacion
+
+        # VIIS -> Proyecto
+        viis.relation_viis_tiene_pi(proyecto_investigacion)
+        # VIIS -> Convocatoria
+        viis.relation_viis_tiene_convocatoria(convocatoria)
+
+        # Convocatoria -> Proyecto
+        convocatoria.relation_convocatoria_tiene_pi(pi=proyecto_investigacion)
 
         for grupo in self.grupos_investigacion:
+
+            # VIIS -> Grupo Investigacion
+            viis.relation_viis_adscribe_gi(grupo)
+
+            for linea in self.lineas_investigacion:
+                # Linea -> Proyecto
+                linea.relation_li_tiene_pi(proyecto_investigacion)
+                grupo.relation_gi_tiene_li(linea)
+
             for i, estudiante in enumerate(self.estudiantes):
-                estudiante.relation_estudiante_es_autor_pi(self.proyecto_investigacion)
+                # Grupo de Investigacion -> Estudiante
+                grupo.relation_gi_tiene_docente(estudiante)
+
+                # Investigador -> Estudiante
+                estudiante.relation_investigador_es_estudiante(estudiante)
+
+                # Estudiante -> Proyecto
+                estudiante.relation_estudiante_es_autor_pi(proyecto_investigacion)
+
+                # VIIS -> Estudiantes
+                viis.relation_viis_tiene_investigador(estudiante)
+
+                # Convocatoria -> Estudiante
+                convocatoria.relation_convocatoria_dirigida_investigador(estudiante)
 
                 if i < len(self.asesores):
                     asesor = self.asesores[i]
+                    # Asesor -> Proyecto
                     asesor.docente_asesora_pi.append(self.proyecto_investigacion)
+                    # Grupo -> Asesor
+                    grupo.relation_gi_tiene_docente(asesor)
+                    # VIIS -> Asesor
+                    viis.relation_viis_tiene_investigador(asesor)
+                else:
+                    asesor = None
 
                 # Relacion Programa, Facultad
                 if i < len(self.programas):
                     programa = self.programas[i]
+                    # Programa -> Estudiante
                     programa.relation_programa_tiene_estudiante(estudiante)
+                    # Programa -> Docente
+                    if asesor is not None:
+                        programa.relation_programa_tiene_docente(asesor)
+                else:
+                    programa = None
 
                 if i < len(self.departamentos):
                     departamento = self.departamentos[i]
+                    # Departamento -> Programa
+                    if programa is not None:
+                        departamento.relation_departamento_tiene_programa(programa)
+                    # Departamento -> Grupo de Investigacion
                     departamento.relation_departamento_tiene_gi(grupo)
+                else:
+                    departamento = None
 
                 if i < len(self.facultades):
                     facultad = self.facultades[i]
-                    facultad.relation_universidad_tiene_facultad(facultad)
-
-                universidad = self.universidad
-                universidad.relation_universidad_tiene_facultad(universidad)
-                universidad.relation_universidad_tiene_viis(self.viis)
-
-                # Grupo de Investigacion
-                grupo.relation_gi_tiene_docente(estudiante)
-
-            for linea in self.lineas_investigacion:
-                grupo.relation_gi_tiene_li(linea)
-
-        self.convocatoria.relation_convocatoria_tiene_pi(pi=self.proyecto_investigacion)
+                    # Facultad -> Departamento
+                    if departamento is not None:
+                        facultad.relation_facultad_tiene_departamento(departamento)
+                    # Universidad -> Facultad
+                    universidad.relation_universidad_tiene_facultad(facultad)
 
         for palabra in self.palabras:
             self.proyecto_investigacion \
@@ -518,7 +665,8 @@ class InstanciarInvestigacionesEstudiantes(Query):
         for investigacion in self.investigaciones:
             print(investigacion.id)
             # if investigacion.id == 386:
-            investigacion_estudiante = InvestigacionEstudiante(investigacion, self.universidad_ontologia)
+            investigacion_estudiante = InvestigacionEstudiante(investigacion, self.universidad_ontologia,
+                                                               investigacion.tipo_resumen)
             investigacion_estudiante.instanciar()
             investigacion_estudiante.instanciar_palabras()
             investigacion_estudiante.relacionar()

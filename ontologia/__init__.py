@@ -278,6 +278,8 @@ with ontologia:
             self.universidad_tiene_viis.append(viis)
 
 
+
+
     # SUBCLASE FACULTAD
     class Facultad(Universidad):
 

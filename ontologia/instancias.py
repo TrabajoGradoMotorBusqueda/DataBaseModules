@@ -5,9 +5,9 @@ def normalizar_nombre(strblanks):
     strunderscore = strblanks.replace(' ', '_')
     return strunderscore.lower()
 
-# TODO: name pi and id
+
 def instanciar_pi(id_proyecto_investigacion, titulo, resumen, palabras_clave, tipo, estado):
-    pi = Proyecto_investigacion("pi"+str(id_proyecto_investigacion))
+    pi = Proyecto_investigacion("pi" + "_" + str(id_proyecto_investigacion))
     pi.set_id_proyecto_investigacion(id_proyecto_investigacion)
     pi.set_titulo_proyecto_investigacion(titulo)
     pi.set_resumen_proyecto_investigacion(resumen)
@@ -17,27 +17,27 @@ def instanciar_pi(id_proyecto_investigacion, titulo, resumen, palabras_clave, ti
 
     return pi
 
-# TODO: Capitalize el nombre
+
 def instanciar_facultad(id_facultad, nombre_facultad):
     # Ojo recibe de parametro universidad
-    facultad = Facultad(normalizar_nombre(nombre_facultad+str(id_facultad)))
+    facultad = Facultad(normalizar_nombre("fac"+"_"+normalizar_nombre(nombre_facultad)))
     facultad.set_id_facultad(id_facultad)
     facultad.set_nombre_facultad(nombre_facultad)
     return facultad
 
-# TODO: Capitalize el nombre
+
 def instanciar_departamento(id_departamento, nombre_departamento):  # resumenes decentes no tiene el Depto
 
     # Ojo recibe de parametro facultad
-    departamento = Departamento(normalizar_nombre(nombre_departamento+str(id_departamento)))
+    departamento = Departamento("dep"+"_"+normalizar_nombre(nombre_departamento))
     departamento.set_id_departamento(id_departamento)
     departamento.set_nombre_departamento(nombre_departamento)
     return departamento
 
-# TODO: Capitalize el nombre
+
 def instanciar_programa(id_programa, nombre_programa):
     # Parametro para Departamento
-    programa = Programa(normalizar_nombre(nombre_programa+str(id_programa)))
+    programa = Programa(normalizar_nombre("pro"+"_"+normalizar_nombre(nombre_programa)))
     programa.set_id_programa(id_programa)
     programa.set_nombre_programa(nombre_programa)
     return programa
@@ -45,7 +45,7 @@ def instanciar_programa(id_programa, nombre_programa):
 
 def instanciar_gi(id_grupo_investigacion, nombre_grupo_investigacion):
     # Ojo recibe de parametro Thing
-    gi = Grupo_investigacion(normalizar_nombre(nombre_grupo_investigacion).capitalize())
+    gi = Grupo_investigacion("gi"+"_"+normalizar_nombre(nombre_grupo_investigacion))
     gi.set_id_grupo_investigacion(id_grupo_investigacion)
     gi.set_nombre_grupo_investigacion(nombre_grupo_investigacion)
     #     gi.set_clasificacion_grupo_investigacion(clasificacion_grupo_investigacion)
@@ -56,7 +56,7 @@ def instanciar_gi(id_grupo_investigacion, nombre_grupo_investigacion):
 
 def instanciar_li(id_linea_investigacion, nombre_linea_investigacion):
     # Ojo recibe de parametro Grupo-_investigacion
-    li = Linea_investigacion(normalizar_nombre(nombre_linea_investigacion).capitalize())
+    li = Linea_investigacion("li"+"_"+normalizar_nombre(nombre_linea_investigacion))
     li.set_id_linea_investigacion(id_linea_investigacion)
     li.set_nombre_linea_investigacion(nombre_linea_investigacion)
 
@@ -123,9 +123,9 @@ def instanciar_ie(id_investigador_externo, nombre_investigador_externo):
 
 
 # Funciones para estudiantes
-def instanciar_estudiante(id_estudiante, codigo_estudiante,nombre, apellido):
+def instanciar_estudiante(id_estudiante, codigo_estudiante, nombre, apellido):
     # Recibe de parametro Investigador
-    estudiante = Estudiante(normalizar_nombre(nombre+" "+apellido))  # Iniciamos el Objeto
+    estudiante = Estudiante(normalizar_nombre(nombre + " " + apellido))  # Iniciamos el Objeto
     estudiante.set_id_estudiante(id_estudiante)
     estudiante.set_codigo_investigador(codigo_estudiante)
     estudiante.set_nombres_investigador(nombre)
@@ -138,29 +138,19 @@ def instanciar_estudiante(id_estudiante, codigo_estudiante,nombre, apellido):
 
 
 def instanciar_palabra(nombre_palabra, descripcion_palabra):
-    try:
-        palabra = Palabra(nombre_palabra)
-        palabra.set_lema_palabra(nombre_palabra)
-        palabra.set_descripcion_palabra(descripcion_palabra)
+    palabra = Palabra(nombre_palabra)
+    palabra.set_lema_palabra(nombre_palabra)
+    palabra.set_descripcion_palabra(descripcion_palabra)
 
-        return palabra
-    except:
-        print(nombre_palabra)
+    return palabra
 
 
-def definir_id(nombre, clase, clase_equivalente=None):
+def definir_id(nombre, clase):
     nombre = normalizar_nombre(nombre)
-    if clase == "Grupo_investigacion": nombre = nombre.capitalize()
+    # if clase == "Grupo_investigacion": nombre = nombre.capitalize()
 
     clase_ontologia = ontologia.search_one(iri=f"*{clase}")
     instancia = ontologia.search_one(iri=f"*{nombre}*", is_a=clase_ontologia)
-
-    # instancia_equivalente = None
-    # if clase_equivalente is not None:
-    #     clase_equivalente_onto = ontologia.search_one(iri=f"*{clase_equivalente}")
-    #     instancia_equivalente = ontologia.search_one(iri=f"*{nombre}*", is_a=clase_equivalente_onto)
-
-    # instancia = ontologia.search(type=clase_ontologia)
 
     if instancia is None:
         id_objeto = len(clase_ontologia.instances()) + 1

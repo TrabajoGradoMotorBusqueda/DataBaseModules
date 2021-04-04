@@ -1,9 +1,10 @@
 from ontologia import *
+import re
 
-
-def normalizar_nombre(strblanks):
-    strunderscore = strblanks.replace(' ', '_')
-    return strunderscore.lower()
+def normalizar_nombre(string):
+    string = re.sub(r'[^\w\s]', '', string)
+    string_normalizada = string.replace(' ', '_')
+    return string_normalizada.lower()
 
 
 def instanciar_pi(id_proyecto_investigacion, titulo, resumen, palabras_clave, tipo, estado):
@@ -56,6 +57,10 @@ def instanciar_gi(id_grupo_investigacion, nombre_grupo_investigacion):
 
 def instanciar_li(id_linea_investigacion, nombre_linea_investigacion):
     # Ojo recibe de parametro Grupo-_investigacion
+    string = "li"+"_"+normalizar_nombre(nombre_linea_investigacion)
+    if 'li_arte,_cultura_y_territorio' == string:
+        print("pausaaa")
+
     li = Linea_investigacion("li"+"_"+normalizar_nombre(nombre_linea_investigacion))
     li.set_id_linea_investigacion(id_linea_investigacion)
     li.set_nombre_linea_investigacion(nombre_linea_investigacion)
@@ -98,7 +103,7 @@ def instanciar_universidad(id_universidad, nombre_universidad):
 def instanciar_docente(id_docente, codigo, nombre, apellidos):
     # Ojo recibe de parametro Investigador
     docente = Docente(normalizar_nombre(nombre + " " + apellidos))
-    docente.set_id_docente(id_docente)
+    docente.set_id_investigador(id_docente)
     docente.set_codigo_investigador(codigo)
     docente.set_nombres_investigador(nombre)
     docente.set_apellidos_investigador(apellidos)
@@ -126,7 +131,7 @@ def instanciar_ie(id_investigador_externo, nombre_investigador_externo):
 def instanciar_estudiante(id_estudiante, codigo_estudiante, nombre, apellido):
     # Recibe de parametro Investigador
     estudiante = Estudiante(normalizar_nombre(nombre + " " + apellido))  # Iniciamos el Objeto
-    estudiante.set_id_estudiante(id_estudiante)
+    estudiante.set_id_investigador(id_estudiante)
     estudiante.set_codigo_investigador(codigo_estudiante)
     estudiante.set_nombres_investigador(nombre)
     estudiante.set_apellidos_investigador(apellido)
